@@ -6,6 +6,10 @@ export interface IUser extends Document {
   password?: string;
   status: 'user' | 'staff' | 'admin';
   position?: string;
+  role?: string;
+  duties?: string;
+  picture?: string;
+  quote?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -23,6 +27,22 @@ const UserSchema: Schema = new Schema(
     position: {
       type: String,
       default: 'General Staff',
+    },
+    role: {
+      type: String,
+      default: 'General',
+    },
+    duties: {
+      type: String,
+      default: 'General',
+    },
+    picture: {
+      type: String,
+      default: '',
+    },
+    quote: {
+      type: String,
+      default: '',
     },
   },
   { timestamps: true }

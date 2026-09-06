@@ -13,6 +13,8 @@ import projectRoutes from './routes/projectRoutes';
 import blogRoutes from './routes/blogRoutes';
 import jobRoutes from './routes/jobRoutes';
 import tutorialRoutes from './routes/tutorialRoutes';
+import positionRoutes from './routes/positionRoutes';
+import emailRoutes from './routes/emailRoutes';
 
 dotenv.config();
 
@@ -74,6 +76,8 @@ app.use('/api/projects', projectRoutes);
 app.use('/api/blogs', blogRoutes);
 app.use('/api/jobs', jobRoutes);
 app.use('/api/tutorials', tutorialRoutes);
+app.use('/api/positions', positionRoutes);
+app.use('/api/emails', emailRoutes);
 
 // Error Handling Middleware
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
