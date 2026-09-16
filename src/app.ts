@@ -15,6 +15,8 @@ import jobRoutes from './routes/jobRoutes';
 import tutorialRoutes from './routes/tutorialRoutes';
 import positionRoutes from './routes/positionRoutes';
 import emailRoutes from './routes/emailRoutes';
+import subscriberRoutes from './routes/subscriberRoutes';
+import policyRoutes from './routes/policyRoutes';
 
 dotenv.config();
 
@@ -25,8 +27,12 @@ app.use(helmet({
   crossOriginResourcePolicy: false,
 }));
 const allowedOrigins = [
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
   'http://localhost:3002',
   'http://127.0.0.1:3002',
+  'http://localhost:30013',
+  'http://127.0.0.1:30013',
   'https://kennytechstudios.com',
   'https://www.kennytechstudios.com'
 ];
@@ -78,6 +84,8 @@ app.use('/api/jobs', jobRoutes);
 app.use('/api/tutorials', tutorialRoutes);
 app.use('/api/positions', positionRoutes);
 app.use('/api/emails', emailRoutes);
+app.use('/api/subscribers', subscriberRoutes);
+app.use('/api/policies', policyRoutes);
 
 // Error Handling Middleware
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {

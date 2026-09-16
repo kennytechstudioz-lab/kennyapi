@@ -10,6 +10,8 @@ export interface IUser extends Document {
   duties?: string;
   picture?: string;
   quote?: string;
+  address?: string;
+  staffRank?: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -43,6 +45,14 @@ const UserSchema: Schema = new Schema(
     quote: {
       type: String,
       default: '',
+    },
+    address: {
+      type: String,
+      default: '',
+    },
+    staffRank: {
+      type: Number,
+      default: 99,
     },
   },
   { timestamps: true }

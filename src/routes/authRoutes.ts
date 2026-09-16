@@ -8,7 +8,8 @@ import {
   getStaffs, 
   updateUser, 
   bulkUpdateUserStatus,
-  changePassword 
+  changePassword,
+  getPublicTeam
 } from '../controllers/authController';
 
 const router = express.Router();
@@ -19,6 +20,7 @@ router.get('/users', getUsers);
 router.get('/users/:id', getUserById);
 router.delete('/users/:id', deleteUser);
 router.get('/staffs', getStaffs);
+router.get('/team', getPublicTeam);
 router.put('/users/bulk-status', bulkUpdateUserStatus);
 router.put('/users/:id', updateUser);
 router.put('/users/:id/password', changePassword);

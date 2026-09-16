@@ -98,8 +98,22 @@ export const deleteUser = async (req: Request, res: Response) => {
 export const getStaffs = async (req: Request, res: Response) => {
   try {
     const query = { status: { $in: ['staff', 'admin'] } };
-    const result = await paginate(User, req, query);
+    const result = await paginate(User, req, query, { staffRank: 1, createdAt: 1 });
     res.json(result);
+  } catch (error: any) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Public endpoint for home page team section — no auth required
+export const getPublicTeam = async (req: Request, res: Response) => {
+  try {
+    const team = await User
+      .find({ status: { $in: ['staff', 'admin'] } })
+      .select('name position picture quote staffRank')
+      .sort({ staffRank: 1, createdAt: 1 })
+      .limit(12);
+    res.json(team);
   } catch (error: any) {
     res.status(500).json({ message: error.message });
   }
@@ -130,12 +144,14 @@ export const getUserById = async (req: Request, res: Response) => {
 
 export const updateUser = async (req: Request, res: Response) => {
   try {
-    const { name, email, status, position, role, duties, picture, quote } = req.body;
+    const { name, email, status, position, role, duties, picture, quote, address, staffRank } = req.body;
     const updateFields: any = {};
     if (name !== undefined) updateFields.name = name;
     if (email !== undefined) updateFields.email = email;
     if (status !== undefined) updateFields.status = status;
     if (position !== undefined) updateFields.position = position;
+    if (address !== undefined) updateFields.address = address;
+    if (staffRank !== undefined) updateFields.staffRank = staffRank;
     if (role !== undefined) {
       updateFields.role = role;
       updateFields.duties = role;
