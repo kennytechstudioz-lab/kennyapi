@@ -152,6 +152,8 @@ export const updateUser = async (req: Request, res: Response) => {
     if (position !== undefined) updateFields.position = position;
     if (address !== undefined) updateFields.address = address;
     if (staffRank !== undefined) updateFields.staffRank = staffRank;
+    if (picture !== undefined) updateFields.picture = picture;
+    if (quote !== undefined) updateFields.quote = quote;
     if (role !== undefined) {
       updateFields.role = role;
       updateFields.duties = role;
