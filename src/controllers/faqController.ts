@@ -3,7 +3,7 @@ import Faq from '../models/Faq';
 
 export const getFaqs = async (req: Request, res: Response) => {
   try {
-    const faqs = await Faq.find().sort({ createdAt: -1 });
+    const faqs = await Faq.find().sort({ createdAt: 1 });
     res.json(faqs);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching FAQs' });

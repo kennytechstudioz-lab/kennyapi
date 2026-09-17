@@ -17,6 +17,8 @@ import positionRoutes from './routes/positionRoutes';
 import emailRoutes from './routes/emailRoutes';
 import subscriberRoutes from './routes/subscriberRoutes';
 import policyRoutes from './routes/policyRoutes';
+import testimonialRoutes from './routes/testimonialRoutes';
+import { handleContactInquiry } from './controllers/emailController';
 
 dotenv.config();
 
@@ -29,10 +31,12 @@ app.use(helmet({
 const allowedOrigins = [
   'http://localhost:3000',
   'http://127.0.0.1:3000',
+  'http://localhost:3001',
+  'http://127.0.0.1:3001',
   'http://localhost:3002',
   'http://127.0.0.1:3002',
-  'http://localhost:30013',
-  'http://127.0.0.1:30013',
+  'http://localhost:3003',
+  'http://127.0.0.1:3003',
   'https://kennytechstudios.com',
   'https://www.kennytechstudios.com'
 ];
@@ -41,11 +45,15 @@ app.use(cors({
   origin: function (origin, callback) {
     // allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-      return callback(new Error(msg), false);
+
+    // Allow any localhost/127.0.0.1 port during local development
+    const isLocalhost = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+    if (isLocalhost || allowedOrigins.includes(origin)) {
+      return callback(null, true);
     }
-    return callback(null, true);
+
+    const msg = `The CORS policy for this site does not allow access from the specified Origin: ${origin}`;
+    return callback(new Error(msg), false);
   },
   credentials: true
 }));
@@ -86,6 +94,8 @@ app.use('/api/positions', positionRoutes);
 app.use('/api/emails', emailRoutes);
 app.use('/api/subscribers', subscriberRoutes);
 app.use('/api/policies', policyRoutes);
+app.use('/api/testimonials', testimonialRoutes);
+app.post('/api/contact', handleContactInquiry);
 
 // Error Handling Middleware
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {

@@ -14,8 +14,27 @@ export const getCompany = async (req: Request, res: Response) => {
         address: '',
         bankName: '',
         accountName: '',
-        accountNumber: ''
+        accountNumber: '',
+        linkedin: '',
+        facebook: '',
+        x: '',
+        instagram: '',
+        youtube: '',
+        tiktok: '',
+        yearsExperience: '18+',
+        completedJobs: '150+',
+        clients: '2000+',
+        customerSatisfaction: '99%',
       });
+    } else {
+      let needsUpdate = false;
+      if (!company.yearsExperience) { company.yearsExperience = '18+'; needsUpdate = true; }
+      if (!company.completedJobs) { company.completedJobs = '150+'; needsUpdate = true; }
+      if (!company.clients) { company.clients = '2000+'; needsUpdate = true; }
+      if (!company.customerSatisfaction) { company.customerSatisfaction = '99%'; needsUpdate = true; }
+      if (needsUpdate) {
+        await company.save();
+      }
     }
     res.status(200).json(company);
   } catch (error: any) {

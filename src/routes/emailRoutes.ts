@@ -7,9 +7,13 @@ import {
   sendEmail,
   toggleRead,
   deleteEmail,
+  handleContactInquiry,
 } from '../controllers/emailController';
 
 const router = Router();
+
+// Public Contact Form
+router.post('/contact', handleContactInquiry);
 
 // IMAP Synchronization
 router.get('/sync', syncIncomingEmails);

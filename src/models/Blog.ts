@@ -2,6 +2,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IBlog extends Document {
   image: string;
+  videoUrl?: string;
   title: string;
   subtitle: string;
   category: string;
@@ -14,6 +15,7 @@ export interface IBlog extends Document {
 
 const BlogSchema: Schema = new Schema({
   image: { type: String, required: true },
+  videoUrl: { type: String, required: false },
   title: { type: String, required: true },
   subtitle: { type: String, required: true },
   category: { type: String, required: true },

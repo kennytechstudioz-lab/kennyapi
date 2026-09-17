@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { ImapFlow } from 'imapflow';
 import { simpleParser } from 'mailparser';
 import EmailMessage, { IEmailMessage } from '../models/EmailMessage';
+import Company from '../models/Company';
 import emailConfig from '../config/emailConfig';
 import { sendMail } from '../utils/emailService';
 
@@ -344,5 +345,144 @@ export const deleteEmail = async (req: Request, res: Response) => {
     }
   } catch (error: any) {
     res.status(500).json({ message: error.message || 'Error deleting email' });
+  }
+};
+
+/**
+ * Handle public contact inquiry submission:
+ * 1. Validates input and ensures message is >= 30 characters.
+ * 2. Saves directly into MongoDB EmailMessage collection in 'inbox' folder.
+ * 3. Sends an email via authenticated SMTP to the company mailbox.
+ * 4. Returns clear, user-friendly JSON feedback.
+ */
+export const handleContactInquiry = async (req: Request, res: Response) => {
+  try {
+    const { name, email, phone, message } = req.body;
+
+    if (!name || !name.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide your name.',
+      });
+    }
+
+    if (!email || !email.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide a valid email address.',
+      });
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide a valid email address.',
+      });
+    }
+
+    const cleanMessage = (message || '').trim();
+    if (cleanMessage.length < 30) {
+      return res.status(400).json({
+        success: false,
+        message: `Your message must be at least 30 characters long (currently ${cleanMessage.length} characters).`,
+      });
+    }
+
+    // Determine target company mailbox
+    const company = await Company.findOne();
+    const companyEmail = company?.email || emailConfig.smtp.auth.user || 'support@kennytechstudios.com';
+
+    const subject = `New Contact Inquiry from ${name.trim()}`;
+    const formattedHtml = `
+      <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #1e293b; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff;">
+        <div style="background-color: #0c1830; padding: 16px 20px; border-radius: 8px; margin-bottom: 20px;">
+          <h2 style="color: #ffffff; margin: 0; font-size: 20px; font-weight: bold;">New Website Contact Inquiry</h2>
+          <p style="color: #38bdf8; margin: 4px 0 0 0; font-size: 13px;">Kenny Tech Studios Web Form</p>
+        </div>
+        
+        <p style="font-size: 15px;">You have received a new contact inquiry from your website:</p>
+        
+        <table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px;">
+          <tr>
+            <td style="padding: 10px; font-weight: bold; width: 130px; color: #475569; border-bottom: 1px solid #f1f5f9;">Full Name:</td>
+            <td style="padding: 10px; border-bottom: 1px solid #f1f5f9; color: #0f172a; font-weight: 600;">${name.trim()}</td>
+          </tr>
+          <tr>
+            <td style="padding: 10px; font-weight: bold; color: #475569; border-bottom: 1px solid #f1f5f9;">Email Address:</td>
+            <td style="padding: 10px; border-bottom: 1px solid #f1f5f9;"><a href="mailto:${email.trim()}" style="color: #2563eb; text-decoration: none; font-weight: 600;">${email.trim()}</a></td>
+          </tr>
+          <tr>
+            <td style="padding: 10px; font-weight: bold; color: #475569; border-bottom: 1px solid #f1f5f9;">Phone Number:</td>
+            <td style="padding: 10px; border-bottom: 1px solid #f1f5f9; color: #0f172a;">${(phone || 'Not provided').trim()}</td>
+          </tr>
+          <tr>
+            <td style="padding: 10px; font-weight: bold; vertical-align: top; color: #475569;">Message:</td>
+            <td style="padding: 14px; background-color: #f8fafc; border-radius: 8px; color: #1e293b; white-space: pre-wrap; line-height: 1.6;">${cleanMessage}</td>
+          </tr>
+        </table>
+        
+        <div style="border-top: 1px solid #e2e8f0; padding-top: 14px; margin-top: 24px; font-size: 12px; color: #94a3b8; display: flex; justify-content: space-between;">
+          <span>Received: ${new Date().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })}</span>
+          <span style="font-weight: bold; color: #2563eb;">Kenny Tech Studios Portal</span>
+        </div>
+      </div>
+    `;
+
+    const formattedText = `
+New Contact Inquiry from Kenny Tech Studios Website
+---------------------------------------------------
+Full Name: ${name.trim()}
+Email Address: ${email.trim()}
+Phone Number: ${(phone || 'Not provided').trim()}
+
+Message:
+${cleanMessage}
+
+Received: ${new Date().toLocaleString()}
+    `.trim();
+
+    // 1. Save directly into MongoDB EmailMessage model in 'inbox' folder
+    const emailDoc = new EmailMessage({
+      messageId: `contact_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+      from: email.trim(),
+      fromName: name.trim(),
+      to: [companyEmail],
+      subject,
+      bodyText: formattedText,
+      bodyHtml: formattedHtml,
+      date: new Date(),
+      isRead: false,
+      folder: 'inbox',
+    });
+    await emailDoc.save();
+
+    // 2. Dispatch via authenticated SMTP directly to company mailbox
+    let smtpSent = false;
+    try {
+      await sendMail({
+        to: companyEmail,
+        subject,
+        html: formattedHtml,
+        text: formattedText,
+        replyTo: email.trim(),
+      });
+      smtpSent = true;
+    } catch (mailErr: any) {
+      console.warn('SMTP delivery notice (message successfully preserved in inbox database):', mailErr?.message || mailErr);
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Thank you! Your message has been sent successfully to our mailbox. Our team will review it and get back to you shortly.',
+      inquiryId: emailDoc._id,
+      smtpDelivered: smtpSent,
+    });
+  } catch (error: any) {
+    console.error('Error handling contact inquiry:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'An error occurred while submitting your message. Please try again or reach out directly at support@kennytechstudios.com.',
+    });
   }
 };
